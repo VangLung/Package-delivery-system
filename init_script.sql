@@ -31,6 +31,11 @@ CREATE TABLE status_logs (
     FOREIGN KEY (shipment_id) REFERENCES shipments(id) ON DELETE CASCADE
 );
 
+CREATE INDEX idx_shipments_customer ON shipments(customer_username);
+CREATE INDEX idx_shipments_status ON shipments(current_status);
+CREATE INDEX idx_shipments_created ON shipments(created_at);
+CREATE INDEX idx_status_logs_shipment ON status_logs(shipment_id);
+
 DELIMITER $$
 
 CREATE TRIGGER after_shipment_update
