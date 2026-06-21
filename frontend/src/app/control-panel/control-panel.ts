@@ -1,5 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, computed, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { ShipmentService, Shipment } from '../services/shipment.service';
+import { AuthService } from '../services/auth.service';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 
@@ -10,6 +12,10 @@ import { CommonModule } from '@angular/common';
   imports: [FormsModule, CommonModule]
 })
 export class ControlPanelComponent implements OnInit {
+  private shipmentService = inject(ShipmentService);
+  private authService = inject(AuthService);
+  private router = inject(Router);
+
   shipmentsList: Shipment[] = [];
   feedbackMessage: string = '';
 
@@ -22,40 +28,56 @@ export class ControlPanelComponent implements OnInit {
 
   filterUsername: string = '';
   filterStatus: string = '';
+  filterDate: string = '';
 
-  constructor(private shipmentService: ShipmentService) {}
+  readonly currentUser = this.authService.currentUser;
+  readonly canCreate = computed(() => {
+    const role = this.authService.role();
+    return role === 'user' || role === 'admin';
+  });
+  readonly canChangeStatus = computed(() => {
+    const role = this.authService.role();
+    return role === 'courier' || role === 'admin';
+  });
+  readonly canFilterByUser = computed(() => {
+    const role = this.authService.role();
+    return role === 'courier' || role === 'admin';
+  });
 
   ngOnInit(): void {
     this.fetchShipments();
   }
 
   fetchShipments(): void {
-    this.shipmentService.searchShipments(this.filterUsername, this.filterStatus).subscribe({
+    this.shipmentService.searchShipments(this.filterUsername, this.filterStatus, this.filterDate).subscribe({
       next: (data) => {
         this.shipmentsList = data;
       },
       error: (err) => {
-        this.feedbackMessage = 'Greška prilikom osvežavanja tabele.';
+        this.feedbackMessage = 'Error refreshing table data.';
         console.error(err);
       }
     });
   }
 
   onCreateShipment(): void {
-    if (!this.newShipment.trackingNumber || !this.newShipment.customerUsername) {
-      this.feedbackMessage = 'Polja "Tracking Number" i "Korisnik" su obavezna!';
+    if (!this.newShipment.trackingNumber) {
+      this.feedbackMessage = 'Tracking Number is required!';
       return;
     }
 
     this.shipmentService.createShipment(this.newShipment).subscribe({
       next: (success) => {
         if (success) {
-          this.feedbackMessage = 'Pošiljka uspešno evidentirana!';
+          this.feedbackMessage = 'Shipment successfully created!';
           this.newShipment = { trackingNumber: '', description: '', currentStatus: 'CREATED', customerUsername: '' };
           this.fetchShipments();
         } else {
-          this.feedbackMessage = 'Problem pri upisu. Proveri da li korisnik postoji.';
+          this.feedbackMessage = 'Insertion failed. Verify the input data.';
         }
+      },
+      error: () => {
+        this.feedbackMessage = 'Insertion failed. Verify the input data.';
       }
     });
   }
@@ -64,9 +86,12 @@ export class ControlPanelComponent implements OnInit {
     this.shipmentService.updateStatus(id, status).subscribe({
       next: (success) => {
         if (success) {
-          this.feedbackMessage = `Status paketa uspešno promenjen u [${status}]`;
+          this.feedbackMessage = `Shipment status updated to [${status}]`;
           this.fetchShipments();
         }
+      },
+      error: () => {
+        this.feedbackMessage = 'You are not allowed to perform this action.';
       }
     });
   }
@@ -78,6 +103,12 @@ export class ControlPanelComponent implements OnInit {
   onResetFilters(): void {
     this.filterUsername = '';
     this.filterStatus = '';
+    this.filterDate = '';
     this.fetchShipments();
+  }
+
+  onLogout(): void {
+    this.authService.logout();
+    this.router.navigate(['/login']);
   }
 }

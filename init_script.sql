@@ -9,7 +9,7 @@ CREATE TABLE users (
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
     email VARCHAR(100) NOT NULL,
-    role VARCHAR(20) NOT NULL -- 'customer' ili 'worker'
+    role VARCHAR(20) NOT NULL -- 'admin', 'user' or 'courier'
 );
 
 CREATE TABLE shipments (

@@ -1,56 +1,64 @@
 <div class="wrapper">
   <div class="nav-bar">
     <span>📦 Delivery Control Panel</span>
-    <button class="btn-logout">Logout</button>
+    <div class="nav-user">
+      <span class="user-info" *ngIf="currentUser() as user">
+        {{ user.firstName }} {{ user.lastName }}
+        <span class="role-badge">{{ user.role }}</span>
+      </span>
+      <button class="btn-logout" (click)="onLogout()">Logout</button>
+    </div>
   </div>
 
   <div class="profile-section">
     <div class="card">
       <h3>Shipment System Management</h3>
-      
-      <h4>➕ Create New Shipment</h4>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Tracking Number</label>
-          <input type="text" [(ngModel)]="newShipment.trackingNumber" placeholder="E.g. TRACK99887">
+
+      <div *ngIf="canCreate()">
+        <h4>➕ Create New Shipment</h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tracking Number</label>
+            <input type="text" [(ngModel)]="newShipment.trackingNumber" placeholder="E.g. TRACK99887">
+          </div>
+          <div class="form-group">
+            <label>Package Description</label>
+            <input type="text" [(ngModel)]="newShipment.description" placeholder="E.g. Dell Monitor 27'">
+          </div>
         </div>
-        <div class="form-group">
-          <label>Package Description</label>
-          <input type="text" [(ngModel)]="newShipment.description" placeholder="E.g. Dell Monitor 27'">
+        <div class="btn-row">
+          <button class="btn-primary" (click)="onCreateShipment()">Insert into Database</button>
         </div>
-        <div class="form-group">
-          <label>Customer Username</label>
-          <input type="text" [(ngModel)]="newShipment.customerUsername" placeholder="E.g. mateja">
-        </div>
+
+        <hr style="margin: 24px 0; border: 0; border-top: 1px solid #f0f0f0;">
       </div>
-      <div class="btn-row">
-        <button class="btn-primary" (click)="onCreateShipment()">Insert into Database</button>
-      </div>
-      
-      <hr style="margin: 24px 0; border: 0; border-top: 1px solid #f0f0f0;">
 
       <h4>🔍 Search Filters</h4>
       <div class="form-row">
-        <div class="form-group">
+        <div class="form-group" *ngIf="canFilterByUser()">
           <label>Recipient Username</label>
           <input type="text" [(ngModel)]="filterUsername" placeholder="Search by user...">
         </div>
         <div class="form-group">
           <label>Shipment Status</label>
-          <input type="text" [(ngModel)]="filterStatus" placeholder="Search by status (CREATED, DELIVERED...)">
+          <input type="text" [(ngModel)]="filterStatus" placeholder="CREATED, IN_TRANSIT, DELIVERED, CANCELLED">
+        </div>
+        <div class="form-group">
+          <label>Creation Date</label>
+          <input type="date" [(ngModel)]="filterDate">
         </div>
       </div>
       <div class="btn-row">
         <button class="btn-primary" (click)="onFilter()">Apply Filters</button>
         <button class="btn-secondary" (click)="onResetFilters()">Reset</button>
       </div>
-      
+
       <p class="success-message" *ngIf="feedbackMessage">{{ feedbackMessage }}</p>
     </div>
 
     <div class="reservations-section">
-      <h2>All Packages Database Overview</h2>
-      
+      <h2>{{ canFilterByUser() ? 'All Packages Database Overview' : 'My Packages' }}</h2>
+
       <div class="no-results" *ngIf="shipmentsList.length === 0">
         No data available. Insert a shipment or change search parameters.
       </div>
@@ -63,7 +71,7 @@
             <th>Description</th>
             <th>Recipient</th>
             <th>Current Status</th>
-            <th>Actions (Change Status)</th>
+            <th *ngIf="canChangeStatus()">Actions (Change Status)</th>
           </tr>
         </thead>
         <tbody>
@@ -76,10 +84,11 @@
               <span [ngClass]="{
                 'status-active': item.currentStatus === 'CREATED',
                 'status-confirmed': item.currentStatus === 'IN_TRANSIT',
-                'status-completed': item.currentStatus === 'DELIVERED'
+                'status-completed': item.currentStatus === 'DELIVERED',
+                'status-cancelled': item.currentStatus === 'CANCELLED'
               }">{{ item.currentStatus }}</span>
             </td>
-            <td>
+            <td *ngIf="canChangeStatus()">
               <div class="action-btns" *ngIf="item.id">
                 <button class="btn-primary" style="padding: 6px 10px; font-size: 12px;" (click)="onChangeStatus(item.id, 'IN_TRANSIT')">Ship</button>
                 <button class="btn-secondary" style="padding: 6px 10px; font-size: 12px; border: 1px solid #f5c842;" (click)="onChangeStatus(item.id, 'DELIVERED')">Deliver</button>
