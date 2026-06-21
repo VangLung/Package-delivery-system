@@ -12,6 +12,7 @@ import javax.sql.DataSource;
 
 import org.springframework.stereotype.Repository;
 import com.example.backend.models.Shipment;
+import com.example.backend.models.StatusLog;
 
 @Repository
 public class ShipmentsRepo implements ShipmentsRepoInterface {
@@ -106,6 +107,31 @@ public class ShipmentsRepo implements ShipmentsRepoInterface {
                         rs.getString("current_status"),
                         rs.getString("customer_username"),
                         rs.getTimestamp("created_at")
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    @Override
+    public List<StatusLog> getHistory(int shipmentId) {
+        List<StatusLog> list = new ArrayList<>();
+        String sql = "SELECT * FROM status_logs WHERE shipment_id = ? ORDER BY changed_at ASC, id ASC";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, shipmentId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(new StatusLog(
+                        rs.getInt("id"),
+                        rs.getInt("shipment_id"),
+                        rs.getString("status"),
+                        rs.getTimestamp("changed_at"),
+                        rs.getString("note")
                     ));
                 }
             }

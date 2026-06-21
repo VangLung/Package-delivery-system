@@ -1,6 +1,35 @@
 <div class="reservations-section">
   <h2>{{ title }}</h2>
 
+  <div class="form-row">
+    @if (canFilterByCustomer) {
+      <div class="form-group">
+        <label>Recipient Username</label>
+        <input type="text" [(ngModel)]="filterCustomer" placeholder="Search by user...">
+      </div>
+    }
+    <div class="form-group">
+      <label>Status</label>
+      <select [(ngModel)]="filterStatus">
+        <option value="">All</option>
+        <option value="CREATED">CREATED</option>
+        <option value="IN_TRANSIT">IN_TRANSIT</option>
+        @if (!excludeDelivered) {
+          <option value="DELIVERED">DELIVERED</option>
+        }
+        <option value="CANCELLED">CANCELLED</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Creation Date</label>
+      <input type="date" [(ngModel)]="filterDate">
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn-primary" (click)="applyFilters()">Apply Filters</button>
+    <button class="btn-secondary" (click)="resetFilters()">Reset</button>
+  </div>
+
   @if (items().length === 0 && !loading()) {
     <div class="no-results">No shipments to display.</div>
   }
@@ -14,6 +43,7 @@
           <th>Description</th>
           <th>Recipient</th>
           <th>Current Status</th>
+          <th>History</th>
           @if (canChangeStatus) {
             <th>Actions</th>
           }
@@ -33,6 +63,10 @@
                 'status-completed': item.currentStatus === 'DELIVERED',
                 'status-cancelled': item.currentStatus === 'CANCELLED'
               }">{{ item.currentStatus }}</span>
+            </td>
+            <td>
+              <button class="btn-secondary" style="padding: 6px 10px; font-size: 12px;"
+                      (click)="openHistory(item)">View</button>
             </td>
             @if (canChangeStatus) {
               <td>
@@ -56,3 +90,44 @@
 
   <div #sentinel style="height: 1px;"></div>
 </div>
+
+@if (historyFor(); as shipment) {
+  <div class="modal-overlay" (click)="closeHistory()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>History — {{ shipment.trackingNumber }}</h3>
+        <button class="btn-secondary" (click)="closeHistory()">Close</button>
+      </div>
+
+      @if (history().length === 0) {
+        <div class="no-results">No history entries.</div>
+      } @else {
+        <table>
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Changed At</th>
+              <th>Note</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (log of history(); track log.id) {
+              <tr>
+                <td>
+                  <span [ngClass]="{
+                    'status-active': log.status === 'CREATED',
+                    'status-confirmed': log.status === 'IN_TRANSIT',
+                    'status-completed': log.status === 'DELIVERED',
+                    'status-cancelled': log.status === 'CANCELLED'
+                  }">{{ log.status }}</span>
+                </td>
+                <td>{{ log.changedAt | date:'yyyy-MM-dd HH:mm:ss' }}</td>
+                <td>{{ log.note }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  </div>
+}

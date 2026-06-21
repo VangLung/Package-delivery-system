@@ -8,7 +8,8 @@ import { ShipmentListComponent } from '../shipment-list/shipment-list';
     <app-shipment-list
       title="Active Shipments (not delivered)"
       [canChangeStatus]="true"
-      [excludeDelivered]="true">
+      [excludeDelivered]="true"
+      [canFilterByCustomer]="true">
     </app-shipment-list>
   `
 })

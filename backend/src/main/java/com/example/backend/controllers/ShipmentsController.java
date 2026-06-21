@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.example.backend.db.ShipmentsRepoInterface;
 import com.example.backend.models.Shipment;
+import com.example.backend.models.StatusLog;
 import com.example.backend.service.ImportJob;
 import com.example.backend.service.ImportService;
 
@@ -98,6 +99,11 @@ public class ShipmentsController {
             excludeDelivered = true;
         }
         return shipmentsRepo.searchShipments(customer, status, date, excludeDelivered, cursor, limit);
+    }
+
+    @GetMapping("/{id}/history")
+    public List<StatusLog> history(@PathVariable int id) {
+        return shipmentsRepo.getHistory(id);
     }
 
     @PostMapping("/import")
