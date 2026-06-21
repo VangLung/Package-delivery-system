@@ -33,14 +33,6 @@ CREATE TABLE status_logs (
 
 DELIMITER $$
 
-CREATE TRIGGER after_shipment_insert
-AFTER INSERT ON shipments
-FOR EACH ROW
-BEGIN
-    INSERT INTO status_logs (shipment_id, status, note)
-    VALUES (NEW.id, NEW.current_status, 'Shipment successfully created in the system.');
-END$$
-
 CREATE TRIGGER after_shipment_update
 AFTER UPDATE ON shipments
 FOR EACH ROW
