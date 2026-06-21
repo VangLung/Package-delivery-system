@@ -86,12 +86,18 @@ public class ShipmentsController {
             @RequestParam String requester,
             @RequestParam(required = false) String customer,
             @RequestParam(required = false) String status,
-            @RequestParam(required = false) String date) {
+            @RequestParam(required = false) String date,
+            @RequestParam(required = false) Integer cursor,
+            @RequestParam(defaultValue = "50") int limit) {
+        boolean excludeDelivered = false;
         // A plain user can only ever see their own shipments.
         if ("user".equals(role)) {
             customer = requester;
+        } else if ("courier".equals(role)) {
+            // A courier only works with shipments that are not delivered yet.
+            excludeDelivered = true;
         }
-        return shipmentsRepo.searchShipments(customer, status, date);
+        return shipmentsRepo.searchShipments(customer, status, date, excludeDelivered, cursor, limit);
     }
 
     @PostMapping("/import")

@@ -42,12 +42,9 @@ export class ShipmentService {
     return this.http.post<boolean>(`${this.apiUrl}/update-status`, null, { params });
   }
 
-  searchShipments(customer?: string, status?: string, date?: string): Observable<Shipment[]> {
-    let params = this.authParams();
-    if (customer) params = params.set('customer', customer);
-    if (status) params = params.set('status', status);
-    if (date) params = params.set('date', date);
-
+  searchShipments(cursor?: number, limit = 50): Observable<Shipment[]> {
+    let params = this.authParams().set('limit', limit.toString());
+    if (cursor) params = params.set('cursor', cursor.toString());
     return this.http.get<Shipment[]>(`${this.apiUrl}/search`, { params });
   }
 

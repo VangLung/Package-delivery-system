@@ -1,0 +1,58 @@
+<div class="reservations-section">
+  <h2>{{ title }}</h2>
+
+  @if (items().length === 0 && !loading()) {
+    <div class="no-results">No shipments to display.</div>
+  }
+
+  @if (items().length > 0) {
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Tracking Number</th>
+          <th>Description</th>
+          <th>Recipient</th>
+          <th>Current Status</th>
+          @if (canChangeStatus) {
+            <th>Actions</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of items(); track item.id) {
+          <tr>
+            <td>{{ item.id }}</td>
+            <td><strong>{{ item.trackingNumber }}</strong></td>
+            <td>{{ item.description }}</td>
+            <td>{{ item.customerUsername }}</td>
+            <td>
+              <span [ngClass]="{
+                'status-active': item.currentStatus === 'CREATED',
+                'status-confirmed': item.currentStatus === 'IN_TRANSIT',
+                'status-completed': item.currentStatus === 'DELIVERED',
+                'status-cancelled': item.currentStatus === 'CANCELLED'
+              }">{{ item.currentStatus }}</span>
+            </td>
+            @if (canChangeStatus) {
+              <td>
+                <div class="action-btns">
+                  <button class="btn-primary" style="padding: 6px 10px; font-size: 12px;"
+                          (click)="changeStatus(item, 'IN_TRANSIT')">Ship</button>
+                  <button class="btn-secondary" style="padding: 6px 10px; font-size: 12px; border: 1px solid #f5c842;"
+                          (click)="changeStatus(item, 'DELIVERED')">Deliver</button>
+                </div>
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+
+  @if (loading()) {
+    <div class="no-results">Loading…</div>
+  }
+
+  <div #sentinel style="height: 1px;"></div>
+</div>

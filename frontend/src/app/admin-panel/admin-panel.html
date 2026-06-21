@@ -1,0 +1,14 @@
+<div class="card">
+  <h3>📥 Bulk Import (CSV)</h3>
+  <div class="btn-row">
+    <input type="file" accept=".csv" (change)="onFileSelected($event)" [disabled]="importing()">
+    <button class="btn-primary" (click)="upload()" [disabled]="importing() || !selectedFile">
+      {{ importing() ? 'Importing…' : 'Upload & Import' }}
+    </button>
+  </div>
+  @if (importJob(); as job) {
+    <p class="success-message">{{ job.status }} — imported: {{ job.imported }}, failed: {{ job.failed }}</p>
+  }
+</div>
+
+<app-shipment-list title="All Packages"></app-shipment-list>

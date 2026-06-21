@@ -75,21 +75,27 @@ public class ShipmentsRepo implements ShipmentsRepoInterface {
     }
 
     @Override
-    public List<Shipment> searchShipments(String customer, String status, String date) {
+    public List<Shipment> searchShipments(String customer, String status, String date,
+            boolean excludeDelivered, Integer cursor, int limit) {
         List<Shipment> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder("SELECT * FROM shipments WHERE 1=1");
-        
+
         if (customer != null && !customer.isEmpty()) sql.append(" AND customer_username = ?");
         if (status != null && !status.isEmpty()) sql.append(" AND current_status = ?");
         if (date != null && !date.isEmpty()) sql.append(" AND DATE(created_at) = ?");
+        if (excludeDelivered) sql.append(" AND current_status <> 'DELIVERED'");
+        if (cursor != null && cursor > 0) sql.append(" AND id < ?");
+        sql.append(" ORDER BY id DESC LIMIT ?");
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
-            
+
             int paramIndex = 1;
             if (customer != null && !customer.isEmpty()) stmt.setString(paramIndex++, customer);
             if (status != null && !status.isEmpty()) stmt.setString(paramIndex++, status);
             if (date != null && !date.isEmpty()) stmt.setString(paramIndex++, date);
+            if (cursor != null && cursor > 0) stmt.setInt(paramIndex++, cursor);
+            stmt.setInt(paramIndex++, limit);
 
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {

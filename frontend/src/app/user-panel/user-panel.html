@@ -1,0 +1,21 @@
+<div class="card">
+  <h3>➕ Create New Shipment</h3>
+  <div class="form-row">
+    <div class="form-group">
+      <label>Tracking Number</label>
+      <input type="text" [(ngModel)]="newShipment.trackingNumber" placeholder="E.g. TRACK99887">
+    </div>
+    <div class="form-group">
+      <label>Package Description</label>
+      <input type="text" [(ngModel)]="newShipment.description" placeholder="E.g. Dell Monitor 27&quot;">
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn-primary" (click)="create()">Create Shipment</button>
+  </div>
+  @if (message()) {
+    <p class="success-message">{{ message() }}</p>
+  }
+</div>
+
+<app-shipment-list title="My Packages"></app-shipment-list>

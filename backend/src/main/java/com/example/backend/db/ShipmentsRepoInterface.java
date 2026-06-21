@@ -6,6 +6,7 @@ import com.example.backend.models.Shipment;
 public interface ShipmentsRepoInterface {
     public boolean createShipment(Shipment shipment);
     public boolean updateStatus(int shipmentId, String newStatus);
-    public List<Shipment> searchShipments(String customer, String status, String date);
+    public List<Shipment> searchShipments(String customer, String status, String date,
+            boolean excludeDelivered, Integer cursor, int limit);
     public int insertBatch(List<Shipment> batch);
 }
