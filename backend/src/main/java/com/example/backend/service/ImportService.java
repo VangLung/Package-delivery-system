@@ -1,7 +1,9 @@
 package com.example.backend.service;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.Reader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Timestamp;
@@ -28,8 +30,8 @@ import com.example.backend.models.Shipment;
 @Service
 public class ImportService {
 
-    private static final int BATCH_SIZE = 20;
-    private static final int INSERT_THREADS = 3;
+    private static final int BATCH_SIZE = 500;
+    private static final int INSERT_THREADS = 6;
 
     private final ShipmentsRepoInterface shipmentsRepo;
     private final UsersRepoInterface usersRepo;
@@ -64,7 +66,7 @@ public class ImportService {
         CSVFormat format = CSVFormat.DEFAULT.builder()
             .setHeader().setSkipHeaderRecord(true).setTrim(true).setIgnoreEmptyLines(true).build();
 
-        try (Reader reader = Files.newBufferedReader(file);
+        try (BufferedReader reader = bomSafeReader(file);
              CSVParser parser = format.parse(reader)) {
 
             for (CSVRecord rec : parser) {
@@ -130,5 +132,16 @@ public class ImportService {
 
     private String get(CSVRecord rec, String col) {
         return rec.isMapped(col) ? rec.get(col) : null;
+    }
+
+    /** Opens a UTF-8 reader and skips a leading byte-order mark if present. */
+    private BufferedReader bomSafeReader(Path file) throws IOException {
+        BufferedReader reader = new BufferedReader(
+            new InputStreamReader(Files.newInputStream(file), StandardCharsets.UTF_8));
+        reader.mark(1);
+        if (reader.read() != 0xFEFF) {
+            reader.reset();
+        }
+        return reader;
     }
 }
