@@ -1,0 +1,6 @@
+tracking_number,description,current_status,customer_username,created_at
+TRACK000000001,Package number 1,IN_TRANSIT,user2,2025-01-01 00:00:01
+TRACK000000002,Package number 2,DELIVERED,user3,2025-01-01 00:00:02
+TRACK000000003,Package number 3,CANCELLED,user4,2025-01-01 00:00:03
+TRACK000000004,Package number 4,CREATED,user5,2025-01-01 00:00:04
+TRACK000000005,Package number 5,IN_TRANSIT,user6,2025-01-01 00:00:05

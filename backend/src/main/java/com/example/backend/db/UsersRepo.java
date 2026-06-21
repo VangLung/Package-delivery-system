@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Set;
 import javax.sql.DataSource;
 
 import org.springframework.stereotype.Repository;
@@ -62,5 +64,18 @@ public class UsersRepo implements UsersRepoInterface {
             e.printStackTrace();
         }
         return null;
+    }
+
+    @Override
+    public Set<String> findAllUsernames() {
+        Set<String> usernames = new HashSet<>();
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement("SELECT username FROM users");
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) usernames.add(rs.getString("username"));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return usernames;
     }
 }

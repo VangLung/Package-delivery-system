@@ -1,6 +1,6 @@
 import { Component, OnInit, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { ShipmentService, Shipment } from '../services/shipment.service';
+import { ShipmentService, Shipment, ImportJob } from '../services/shipment.service';
 import { AuthService } from '../services/auth.service';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -30,6 +30,10 @@ export class ControlPanelComponent implements OnInit {
   filterStatus: string = '';
   filterDate: string = '';
 
+  selectedFile: File | null = null;
+  importing = false;
+  importJob: ImportJob | null = null;
+
   readonly currentUser = this.authService.currentUser;
   readonly canCreate = computed(() => {
     const role = this.authService.role();
@@ -43,6 +47,7 @@ export class ControlPanelComponent implements OnInit {
     const role = this.authService.role();
     return role === 'courier' || role === 'admin';
   });
+  readonly canImport = computed(() => this.authService.role() === 'admin');
 
   ngOnInit(): void {
     this.fetchShipments();
@@ -110,5 +115,44 @@ export class ControlPanelComponent implements OnInit {
   onLogout(): void {
     this.authService.logout();
     this.router.navigate(['/login']);
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.selectedFile = input.files && input.files.length > 0 ? input.files[0] : null;
+  }
+
+  onUpload(): void {
+    if (!this.selectedFile) {
+      this.feedbackMessage = 'Please choose a CSV file first.';
+      return;
+    }
+    this.importing = true;
+    this.importJob = null;
+    this.shipmentService.importCsv(this.selectedFile).subscribe({
+      next: (jobId) => this.pollImport(jobId),
+      error: () => {
+        this.importing = false;
+        this.feedbackMessage = 'Import failed to start.';
+      }
+    });
+  }
+
+  private pollImport(jobId: string): void {
+    this.shipmentService.getImportStatus(jobId).subscribe({
+      next: (job) => {
+        this.importJob = job;
+        if (job.status === 'RUNNING') {
+          setTimeout(() => this.pollImport(jobId), 1000);
+        } else {
+          this.importing = false;
+          this.selectedFile = null;
+          this.fetchShipments();
+        }
+      },
+      error: () => {
+        this.importing = false;
+      }
+    });
   }
 }

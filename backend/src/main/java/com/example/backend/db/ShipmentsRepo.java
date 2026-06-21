@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import javax.sql.DataSource;
@@ -87,5 +88,25 @@ public class ShipmentsRepo implements ShipmentsRepoInterface {
             e.printStackTrace();
         }
         return list;
+    }
+
+    @Override
+    public int insertBatch(List<Shipment> batch) {
+        String sql = "INSERT INTO shipments (tracking_number, description, current_status, customer_username, created_at) VALUES (?, ?, ?, ?, ?)";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            for (Shipment s : batch) {
+                stmt.setString(1, s.getTrackingNumber());
+                stmt.setString(2, s.getDescription());
+                stmt.setString(3, s.getCurrentStatus());
+                stmt.setString(4, s.getCustomerUsername());
+                stmt.setTimestamp(5, s.getCreatedAt() != null ? s.getCreatedAt() : new Timestamp(System.currentTimeMillis()));
+                stmt.addBatch();
+            }
+            stmt.executeBatch();
+            return batch.size();
+        } catch (SQLException e) {
+            return 0;
+        }
     }
 }

@@ -56,6 +56,19 @@
       <p class="success-message" *ngIf="feedbackMessage">{{ feedbackMessage }}</p>
     </div>
 
+    <div class="card" *ngIf="canImport()">
+      <h4>📥 Bulk Import (CSV)</h4>
+      <div class="btn-row">
+        <input type="file" accept=".csv" (change)="onFileSelected($event)" [disabled]="importing">
+        <button class="btn-primary" (click)="onUpload()" [disabled]="importing || !selectedFile">
+          {{ importing ? 'Importing...' : 'Upload & Import' }}
+        </button>
+      </div>
+      <p *ngIf="importJob" class="success-message">
+        {{ importJob.status }} — imported: {{ importJob.imported }}, failed: {{ importJob.failed }}
+      </p>
+    </div>
+
     <div class="reservations-section">
       <h2>{{ canFilterByUser() ? 'All Packages Database Overview' : 'My Packages' }}</h2>
 

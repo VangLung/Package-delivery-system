@@ -12,6 +12,12 @@ export interface Shipment {
   createdAt?: string;
 }
 
+export interface ImportJob {
+  status: string;
+  imported: number;
+  failed: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -43,5 +49,18 @@ export class ShipmentService {
     if (date) params = params.set('date', date);
 
     return this.http.get<Shipment[]>(`${this.apiUrl}/search`, { params });
+  }
+
+  importCsv(file: File): Observable<string> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post(`${this.apiUrl}/import`, formData, {
+      params: this.authParams(),
+      responseType: 'text'
+    });
+  }
+
+  getImportStatus(jobId: string): Observable<ImportJob> {
+    return this.http.get<ImportJob>(`${this.apiUrl}/import/${jobId}`);
   }
 }

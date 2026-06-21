@@ -1,5 +1,6 @@
 package com.example.backend.controllers;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
@@ -7,14 +8,18 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.example.backend.db.ShipmentsRepoInterface;
 import com.example.backend.models.Shipment;
+import com.example.backend.service.ImportJob;
+import com.example.backend.service.ImportService;
 
 @RestController
 @RequestMapping("/shipments")
@@ -25,9 +30,11 @@ public class ShipmentsController {
     private static final Set<String> ALL_STATUSES = Set.of("CREATED", "IN_TRANSIT", "DELIVERED", "CANCELLED");
 
     private final ShipmentsRepoInterface shipmentsRepo;
+    private final ImportService importService;
 
-    public ShipmentsController(ShipmentsRepoInterface shipmentsRepo) {
+    public ShipmentsController(ShipmentsRepoInterface shipmentsRepo, ImportService importService) {
         this.shipmentsRepo = shipmentsRepo;
+        this.importService = importService;
     }
 
     @PostMapping("/create")
@@ -85,5 +92,20 @@ public class ShipmentsController {
             customer = requester;
         }
         return shipmentsRepo.searchShipments(customer, status, date);
+    }
+
+    @PostMapping("/import")
+    public ResponseEntity<?> importCsv(@RequestParam("file") MultipartFile file, @RequestParam String role)
+            throws IOException {
+        if (!"admin".equals(role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only admins can import shipments.");
+        }
+        return ResponseEntity.accepted().body(importService.start(file));
+    }
+
+    @GetMapping("/import/{jobId}")
+    public ResponseEntity<?> importStatus(@PathVariable String jobId) {
+        ImportJob job = importService.job(jobId);
+        return job == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(job);
     }
 }
