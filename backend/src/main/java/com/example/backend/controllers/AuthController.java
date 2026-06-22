@@ -15,6 +15,7 @@ import com.example.backend.db.UsersRepoInterface;
 import com.example.backend.dto.AuthResponse;
 import com.example.backend.dto.LoginRequest;
 import com.example.backend.models.User;
+import com.example.backend.service.JwtService;
 
 @RestController
 @RequestMapping("/auth")
@@ -25,10 +26,12 @@ public class AuthController {
 
     private final UsersRepoInterface usersRepo;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
-    public AuthController(UsersRepoInterface usersRepo, PasswordEncoder passwordEncoder) {
+    public AuthController(UsersRepoInterface usersRepo, PasswordEncoder passwordEncoder, JwtService jwtService) {
         this.usersRepo = usersRepo;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     @PostMapping("/register")
@@ -73,12 +76,14 @@ public class AuthController {
     }
 
     private AuthResponse toResponse(User user) {
+        String token = jwtService.generate(user.getUsername(), user.getRole());
         return new AuthResponse(
             user.getUsername(),
             user.getFirstName(),
             user.getLastName(),
             user.getEmail(),
-            user.getRole()
+            user.getRole(),
+            token
         );
     }
 }

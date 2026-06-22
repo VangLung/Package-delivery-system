@@ -10,6 +10,7 @@ export interface AuthUser {
   lastName: string;
   email: string;
   role: Role;
+  token: string;
 }
 
 export interface RegisterRequest {
@@ -36,6 +37,10 @@ export class AuthService {
   readonly role = computed<Role | null>(() => this._currentUser()?.role ?? null);
 
   constructor(private http: HttpClient) {}
+
+  get token(): string | null {
+    return this._currentUser()?.token ?? null;
+  }
 
   login(username: string, password: string): Observable<AuthUser> {
     return this.http.post<AuthUser>(`${this.apiUrl}/login`, { username, password }).pipe(

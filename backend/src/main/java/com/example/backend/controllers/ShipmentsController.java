@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -41,8 +42,8 @@ public class ShipmentsController {
     @PostMapping("/create")
     public ResponseEntity<?> createShipment(
             @RequestBody Shipment shipment,
-            @RequestParam String role,
-            @RequestParam String requester) {
+            @RequestAttribute("role") String role,
+            @RequestAttribute("username") String requester) {
         // Only a "user" creates shipments, and always for themselves.
         if (!"user".equals(role) && !"admin".equals(role)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only users can create shipments.");
@@ -62,7 +63,7 @@ public class ShipmentsController {
     public ResponseEntity<?> updateStatus(
             @RequestParam int id,
             @RequestParam String status,
-            @RequestParam String role) {
+            @RequestAttribute("role") String role) {
         // Only couriers and admins can change a shipment status.
         if (!"courier".equals(role) && !"admin".equals(role)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You are not allowed to change shipment status.");
@@ -83,19 +84,17 @@ public class ShipmentsController {
 
     @GetMapping("/search")
     public List<Shipment> searchShipments(
-            @RequestParam String role,
-            @RequestParam String requester,
+            @RequestAttribute("role") String role,
+            @RequestAttribute("username") String requester,
             @RequestParam(required = false) String customer,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String date,
             @RequestParam(required = false) Integer cursor,
             @RequestParam(defaultValue = "50") int limit) {
         boolean excludeDelivered = false;
-        // A plain user can only ever see their own shipments.
         if ("user".equals(role)) {
             customer = requester;
         } else if ("courier".equals(role)) {
-            // A courier only works with shipments that are not delivered yet.
             excludeDelivered = true;
         }
         return shipmentsRepo.searchShipments(customer, status, date, excludeDelivered, cursor, limit);
@@ -107,7 +106,7 @@ public class ShipmentsController {
     }
 
     @PostMapping("/import")
-    public ResponseEntity<?> importCsv(@RequestParam("file") MultipartFile file, @RequestParam String role)
+    public ResponseEntity<?> importCsv(@RequestParam("file") MultipartFile file, @RequestAttribute("role") String role)
             throws IOException {
         if (!"admin".equals(role)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only admins can import shipments.");
