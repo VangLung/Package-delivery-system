@@ -51,8 +51,12 @@ docker compose down -v
 
 Users are created via the registration API. With the stack running:
 
-```powershell
-./seed-users.ps1
+```bash
+# Linux / macOS
+./generate_data/generate-users.sh
+
+# Windows (PowerShell)
+./generate_data/seed-users.ps1
 ```
 
 This creates:
