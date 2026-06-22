@@ -43,6 +43,7 @@
           <th>Description</th>
           <th>Recipient</th>
           <th>Current Status</th>
+          <th>Created</th>
           <th>History</th>
           @if (canChangeStatus) {
             <th>Actions</th>
@@ -64,6 +65,7 @@
                 'status-cancelled': item.currentStatus === 'CANCELLED'
               }">{{ item.currentStatus }}</span>
             </td>
+            <td>{{ item.createdAt | date:'yyyy-MM-dd HH:mm' }}</td>
             <td>
               <button class="btn-secondary" style="padding: 6px 10px; font-size: 12px;"
                       (click)="openHistory(item)">View</button>
