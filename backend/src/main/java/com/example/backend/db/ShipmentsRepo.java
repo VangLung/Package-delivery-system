@@ -157,8 +157,6 @@ public class ShipmentsRepo implements ShipmentsRepoInterface {
                 }
                 stmt.executeBatch();
 
-                // The insert trigger was removed for speed, so we write the
-                // initial status history here, in bulk, using the generated ids.
                 List<Long> ids = new ArrayList<>(batch.size());
                 try (ResultSet keys = stmt.getGeneratedKeys()) {
                     while (keys.next()) {
@@ -179,12 +177,43 @@ public class ShipmentsRepo implements ShipmentsRepoInterface {
                 return batch.size();
             } catch (SQLException e) {
                 conn.rollback();
-                return 0;
+                return insertOneByOne(conn, batch);
             } finally {
                 conn.setAutoCommit(true);
             }
         } catch (SQLException e) {
             return 0;
         }
+    }
+
+    private int insertOneByOne(Connection conn, List<Shipment> batch) throws SQLException {
+        conn.setAutoCommit(true);
+        String sql = "INSERT INTO shipments (tracking_number, description, current_status, customer_username, created_at) VALUES (?, ?, ?, ?, ?)";
+        int inserted = 0;
+        try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+             PreparedStatement logStmt = conn.prepareStatement(LOG_SQL)) {
+            for (Shipment s : batch) {
+                try {
+                    stmt.setString(1, s.getTrackingNumber());
+                    stmt.setString(2, s.getDescription());
+                    stmt.setString(3, s.getCurrentStatus());
+                    stmt.setString(4, s.getCustomerUsername());
+                    stmt.setTimestamp(5, s.getCreatedAt() != null ? s.getCreatedAt() : new Timestamp(System.currentTimeMillis()));
+                    stmt.executeUpdate();
+                    try (ResultSet keys = stmt.getGeneratedKeys()) {
+                        if (keys.next()) {
+                            logStmt.setLong(1, keys.getLong(1));
+                            logStmt.setString(2, s.getCurrentStatus());
+                            logStmt.setString(3, CREATED_NOTE);
+                            logStmt.executeUpdate();
+                        }
+                    }
+                    inserted++;
+                } catch (SQLException rowEx) {
+                    // Skip the bad row (e.g. duplicate tracking number) and continue.
+                }
+            }
+        }
+        return inserted;
     }
 }
